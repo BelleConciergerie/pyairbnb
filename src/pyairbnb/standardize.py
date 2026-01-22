@@ -375,3 +375,6 @@ def from_search(resultRaw):
         datas.append(data)
 
     return datas
+
+def encode_room_id(room_id: str, prefix: str = "StayListing") -> str:
+    return base64.b64encode(f"{prefix}:{room_id}".encode()).decode()
