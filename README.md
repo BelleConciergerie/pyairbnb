@@ -106,22 +106,13 @@ print(f"Found {len(results)} listings from URL search.")
 ### Getting price
 ```python
 import pyairbnb
-import json
-room_url="https://www.airbnb.com/rooms/1496530251967168505"
-check_in = "2026-05-10"
-check_out = "2026-05-12"
-proxy_url = ""  # Proxy URL (if needed)
-language="de"
-data, price_input, cookies = pyairbnb.get_price(room_url, language, proxy_url)
-product_id = price_input["product_id"]
-api_key = price_input["api_key"]
-currency = "USD"
-adults=1
-data = pyairbnb.get_price(api_key, cookies, price_input["impression_id"], product_id, 
-            check_in, check_out, adults, currency, language, proxy_url)
+from datetime import date
 
-with open('price.json', 'w', encoding='utf-8') as f:
-    f.write(json.dumps(data))
+data = pyairbnb.get_price(
+    room_id="1316896675409654026",
+    check_in=date(2026, 2, 4),
+    check_out=date(2026, 2, 7),
+)
 ```
 
 
