@@ -1,0 +1,49 @@
+name: Sync from upstream johnbalvin/pyairbnb
+
+# Sync hebdomadaire le lundi 03h UTC. Egalement triggable manuellement.
+on:
+  schedule:
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/johnbalvin/pyairbnb.git
+          git fetch upstream
+
+      - name: Detect upstream archived/missing
+        run: |
+          # Si l'API GitHub retourne 404 ou archived=true, on log + alerte.
+          status=$(curl -sf -o /dev/null -w '%{http_code}' https://api.github.com/repos/johnbalvin/pyairbnb || echo 404)
+          if [ "$status" = "404" ]; then
+            echo "::error::Upstream johnbalvin/pyairbnb is missing/deleted"
+            exit 1
+          fi
+          archived=$(curl -sf https://api.github.com/repos/johnbalvin/pyairbnb | python3 -c "import json,sys; print(json.load(sys.stdin).get('archived', False))")
+          if [ "$archived" = "True" ]; then
+            echo "::warning::Upstream archived. Fork is now the canonical source."
+          fi
+
+      - name: Fast-forward main if possible
+        run: |
+          git config user.name 'Belle Sync Bot'
+          git config user.email 'noreply@belleconciergerie.com'
+          git checkout main
+          # Try fast-forward only (no merges, no force push).
+          if git merge-base --is-ancestor HEAD upstream/main; then
+            git merge --ff-only upstream/main
+            git push origin main
+            echo "Synced fast-forward from upstream/main"
+          else
+            echo "::warning::Fork has diverged from upstream. Manual review needed."
+          fi
