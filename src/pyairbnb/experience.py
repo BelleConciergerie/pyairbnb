@@ -81,7 +81,7 @@ def search_by_place_id(cursor: str, place_id: str, location_name: str, currency:
     proxies = {}
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
-    response = requests.post(url_parsed, json = inputData, headers=headers_copy, proxies=proxies,  impersonate="chrome124")
+    response = requests.post(url_parsed, json=inputData, headers=headers_copy, proxies=proxies, impersonate="chrome124", timeout=60)  # belle-patches v1
     if response.status_code != 200:
         raise Exception("Not corret status code: ", response.status_code, " response body: ",response.text)
     data = response.json()

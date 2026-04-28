@@ -42,6 +42,7 @@ def fetch_stays_search_hash(proxy_url: str = "") -> str:
         headers=headers,
         proxies=proxies,
         impersonate="chrome124",
+        timeout=60,  # belle-patches v1: explicit timeout (defensive)
     )
     homepage.raise_for_status()
 
@@ -52,7 +53,8 @@ def fetch_stays_search_hash(proxy_url: str = "") -> str:
         raise RuntimeError("Unable to locate StaysSearch bundle")
 
     bundle = requests.get(
-        bundle_match.group(0), headers=headers, proxies=proxies, impersonate="chrome124"
+        bundle_match.group(0), headers=headers, proxies=proxies, impersonate="chrome124",
+        timeout=60,  # belle-patches v1: explicit timeout
     )
     bundle.raise_for_status()
 
@@ -63,7 +65,7 @@ def fetch_stays_search_hash(proxy_url: str = "") -> str:
         raise RuntimeError("Unable to locate StaysSearchRoute module")
 
     module_url = f"https://a0.muscache.com/airbnb/static/packages/web/{module_match.group(0)}"
-    module = requests.get(module_url, headers=headers, proxies=proxies, impersonate="chrome124")
+    module = requests.get(module_url, headers=headers, proxies=proxies, impersonate="chrome124", timeout=60)  # belle-patches v1
     module.raise_for_status()
 
     hash_match = re.compile(r"operationId:['\"]([0-9a-f]{64})").search(module.text)
@@ -83,19 +85,22 @@ def get(api_key:str, cursor:str, check_in:str, check_out:str, ne_lat:float, ne_l
         "currency": currency,
     }
     url_parsed = f"{base_url}?{urlencode(query_params)}"
+    # Belle-patches v1 : retire placeId hardcoded (ChIJpTeBx6wjq5oROJeXkPCSSSo
+    # = Galapagos Island, Ecuador) + query "Galapagos Island, Ecuador". Tous les
+    # calls pyairbnb avaient le meme placeId fingerprint -> bot detection trivial
+    # cote Airbnb. Avec searchByMap=true + neLat/swLat/swLng, Airbnb utilise les
+    # coords (placeId/query secondaire), donc retrait safe.
     rawParams=[
         {"filterName":"cdnCacheSafe","filterValues":["false"]},
         {"filterName":"channel","filterValues":["EXPLORE"]},
         {"filterName":"datePickerType","filterValues":["calendar"]},
         {"filterName":"flexibleTripLengths","filterValues":["one_week"]},
-        {"filterName":"itemsPerGrid","filterValues":["50"]},#if you read this, this is items returned number, this can bex exploited  ;)
+        {"filterName":"itemsPerGrid","filterValues":["50"]},
         {"filterName":"monthlyLength","filterValues":["3"]},
         {"filterName":"monthlyStartDate","filterValues":["2024-02-01"]},
         {"filterName":"neLat","filterValues":[str(ne_lat)]},
         {"filterName":"neLng","filterValues":[str(ne_long)]},
-        {"filterName":"placeId","filterValues":["ChIJpTeBx6wjq5oROJeXkPCSSSo"]},
         {"filterName":"priceFilterInputType","filterValues":["0"]},
-        {"filterName":"query","filterValues":["Galapagos Island, Ecuador"]},
         {"filterName":"screenSize","filterValues":["large"]},
         {"filterName":"refinementPaths","filterValues":["/homes"]},
         {"filterName":"searchByMap","filterValues":["true"]},
@@ -205,7 +210,7 @@ def get(api_key:str, cursor:str, check_in:str, check_out:str, ne_lat:float, ne_l
     proxies = {}
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
-    response = requests.post(url_parsed, json = inputData, headers=headers_copy, proxies=proxies,  impersonate="chrome124")
+    response = requests.post(url_parsed, json=inputData, headers=headers_copy, proxies=proxies, impersonate="chrome124", timeout=60)  # belle-patches v1
     if response.status_code != 200:
         raise Exception("Not corret status code: ", response.status_code, " response body: ",response.text)
     data = response.json()
@@ -223,7 +228,7 @@ def get_markets(currency: str, locale: str, api_key: str, proxy_url: str):
     proxies = {}
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
-    response = requests.get(url_parsed, headers=headers_copy, proxies=proxies, impersonate="chrome124")
+    response = requests.get(url_parsed, headers=headers_copy, proxies=proxies, impersonate="chrome124", timeout=60)  # belle-patches v1
     if response.status_code != 200:
         raise Exception("Not corret status code: ", response.status_code, " response body: ",response.text)
     data = response.json()
@@ -250,7 +255,7 @@ def get_places_ids(country: str, location_name: str, currency: str, locale: str,
     proxies = {}
     if proxy_url:
         proxies = {"http": proxy_url, "https": proxy_url}
-    response = requests.get(url_parsed, headers=headers_copy, proxies=proxies, impersonate="chrome124")
+    response = requests.get(url_parsed, headers=headers_copy, proxies=proxies, impersonate="chrome124", timeout=60)  # belle-patches v1
     if response.status_code != 200:
         raise Exception("Not corret status code: ", response.status_code, " response body: ",response.text)
     data = response.json()

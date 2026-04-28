@@ -156,8 +156,11 @@ def get(
     headers = _build_headers(api_key, proxy_url)
     proxies = {"http": proxy_url, "https": proxy_url} if proxy_url else None
     with requests.Session() as session:
-        session.cookies.update(cookies)
-        response = session.get(url=url, headers=headers, proxies=proxies)
+        # belle-patches v1 : null check sur cookies (avant : crash TypeError
+        # si caller passait None au lieu d'un dict).
+        if cookies:
+            session.cookies.update(cookies)
+        response = session.get(url=url, headers=headers, proxies=proxies, timeout=60)  # belle-patches v1
     
     response.raise_for_status()
     data = response.json()

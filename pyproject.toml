@@ -1,15 +1,23 @@
 [project]
 
-version = '2.2.1'
+version = '2.2.1+belle.1'
 name="pyairbnb"
-description = 'Airbnb scraper in Python'
+description = 'Airbnb scraper in Python (Belle Conciergerie patches)'
 authors = [
   { name="John Balvin", email="johnchristian@hotmail.es" },
+  { name="Belle Conciergerie", email="contact@belleconciergerie.com" },
 ]
 readme= "README.md"
 keywords=['airbnb', 'scraper', 'crawler','bot','reviews']
-dependencies=['curl_cffi','bs4','requests']
+# Belle-patches v1 : pin deps pour eviter breaking changes transitive (curl_cffi
+# 0.x.y a deja eu plusieurs breaks API). bs4 et requests aussi pinned.
+dependencies=[
+    'curl_cffi>=0.5.0,<1.0.0',
+    'beautifulsoup4>=4.12.0,<5.0.0',
+    'requests>=2.31.0,<3.0.0',
+]
 
 
 [project.urls]
 Homepage='https://github.com/johnbalvin/pyairbnb'
+Fork='https://github.com/BelleConciergerie/pyairbnb'

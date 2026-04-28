@@ -253,16 +253,23 @@ def from_details(meta):
     return data
 
 def decode_listing_id(base64_id: str) -> int:
+    """Decode StayListing:N base64 -> N.
+
+    Belle-patches v1 : raise ValueError au lieu de retourner 0 silencieusement.
+    Avant ce fix, un base64 invalide (Airbnb change format) causait corruption
+    silencieuse en DB : toutes les rows pointaient vers le pseudo-listing 0,
+    avec un simple `print("Decode error:", e)` perdu dans stdout.
+    """
     if not base64_id:
-        return 0
+        raise ValueError("base64_id is empty")
     try:
         decoded = base64.b64decode(base64_id).decode("utf-8")
-        match = re.search(r"(\d+)$", decoded)
-        if match:
-            return int(match.group(1))
     except Exception as e:
-        print("Decode error:", e)
-    return 0
+        raise ValueError(f"base64 decode failed for {base64_id!r}: {e}") from e
+    match = re.search(r"(\d+)$", decoded)
+    if not match:
+        raise ValueError(f"no numeric ID found in decoded string: {decoded!r}")
+    return int(match.group(1))
 
 def from_search(resultRaw):
     results = utils.get_nested_value(resultRaw,"data.presentation.staysSearch.results.searchResults","")

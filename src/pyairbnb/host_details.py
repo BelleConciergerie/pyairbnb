@@ -43,7 +43,8 @@ def get(api_key: str, cookies, host_id: str, language: str, proxy_url: str):
         params=params,
         headers=headers,
         cookies=cookies,
-        proxies=proxies
+        proxies=proxies,
+        timeout=60,  # belle-patches v1: explicit timeout
     )
 
     # Raise an exception if the request failed
